@@ -61,6 +61,8 @@ An example `refs.txt` for the SongLoader follows:
 ""CustomPlatforms.dll
 ```
 
+In this example, `bsinstalldir.txt` must contain the full path to the root installation directory of Beat Saber, using forward slashes, with a trailing slash.
+
 ### `AssemblyRenameStep`
 
 This defines an MSBuild target to automatically rename assemblies based on their version, according to [BSIPA's `Libs/` requirements](https://github.com/nike4613/BeatSaber-IPA-Reloaded/wiki/Developing#additional-libraries).

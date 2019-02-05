@@ -50,10 +50,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
-    <Exec Command="&quot;$(ProjectDir)$(OutputPath)$(AssemblyName).exe&quot; &quot;$(SolutionDir)Refs/refs.txt&quot;" WorkingDirectory="$(SolutionDir)"></Exec>
+    <Exec Command="&quot;$(ProjectDir)$(OutputPath)$(AssemblyName).exe&quot; &quot;$(SolutionDir)Refs/refs.txt&quot;" WorkingDirectory="$(SolutionDir)">
+    </Exec>
   </Target>
 </Project>
