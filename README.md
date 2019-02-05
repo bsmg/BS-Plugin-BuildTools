@@ -16,7 +16,7 @@ It expects a directory `Refs` in your solution root, with a file `refs.txt` in t
 It is recommended to have a `bsinstalldir.txt` in your solution root so that your `refs.txt` is not dependent on one machine's configuration.
 An example `refs.txt` for the SongLoader follows:
 ```
-::from ./bsinstall.txt
+::from ./bsinstalldir.txt
 "Beat Saber_Data/
 ""Managed/
 """Assembly-CSharp
