@@ -104,7 +104,7 @@ namespace CollectDependencies
                                 module.Virtualize(fname);
                             }
                             else if (fparts.Contains("native"))
-                                continue;
+                                goto copy;
 
                             var resolver = new DefaultAssemblyResolver();
                             resolver.AddSearchDirectory(Path.GetDirectoryName(fname));
@@ -148,8 +148,8 @@ namespace CollectDependencies
                         }
                     }
 
+                    copy:
                     File.Copy(fname, outp);
-
                 }
                 catch (Exception e)
                 {
