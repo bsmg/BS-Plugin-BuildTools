@@ -98,11 +98,13 @@ namespace CollectDependencies
                         try
                         {
                             // ReSharper disable once StringLiteralTypo
-                            if (fparts.Length > 1 && fparts[1] == "virt")
+                            if (fparts.Contains("virt"))
                             {
                                 var module = VirtualizedModule.Load(fname);
                                 module.Virtualize(fname);
                             }
+                            else if (fparts.Contains("native"))
+                                continue;
 
                             var resolver = new DefaultAssemblyResolver();
                             resolver.AddSearchDirectory(Path.GetDirectoryName(fname));

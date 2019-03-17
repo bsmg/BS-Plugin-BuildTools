@@ -39,13 +39,15 @@ namespace MSBuildTasks
                         {
                             ReadWrite = false,
                             InMemory = true,
-                            ReadingMode = ReadingMode.Immediate
+                            ReadingMode = ReadingMode.Deferred
                         });
                         var asmName = module.Assembly.Name;
                         var name = asmName.Name;
                         var version = asmName.Version;
                         var newFile = $"{name}.{version}.dll";
                         var newFilePath = Path.Combine(Path.GetDirectoryName(assembly.ItemSpec) ?? throw new InvalidOperationException(), newFile);
+
+                        module.Dispose();
 
                         Log.LogMessage(MessageImportance.Normal, $"Old file: {assembly.ItemSpec}, new file: {newFilePath}");
 
