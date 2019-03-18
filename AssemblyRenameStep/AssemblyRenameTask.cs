@@ -55,6 +55,14 @@ namespace MSBuildTasks
                             File.Delete(newFilePath);
 
                         File.Move(assembly.ItemSpec, newFilePath);
+
+                        string pdbFile;
+                        if (File.Exists(pdbFile = Path.ChangeExtension(assembly.ItemSpec, "pdb")))
+                        {
+                            Debug.Assert(pdbFile != null, nameof(pdbFile) + " != null");
+                            File.Move(pdbFile, Path.ChangeExtension(newFilePath, "pdb"));
+                        }
+
                     }
                     catch (Exception e)
                     {
