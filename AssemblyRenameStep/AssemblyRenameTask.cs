@@ -2,6 +2,7 @@
 using Microsoft.Build.Utilities;
 using Mono.Cecil;
 using System;
+using System.Diagnostics;
 using System.IO;
 
 // ReSharper disable once CheckNamespace
