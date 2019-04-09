@@ -33,7 +33,7 @@ namespace CollectDependencies
                 }
 
                 var lineNo = 0;
-                foreach (var line in depsFile.Split(new[] { Environment.NewLine }, StringSplitOptions.None))
+                foreach (var line in depsFile.Split(new[] { Environment.NewLine, "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     var parts = line.Split('"');
                     var path = parts.Last();
@@ -81,10 +81,11 @@ namespace CollectDependencies
 
             foreach (var file in files)
             {
+                string fname = null;
                 try
                 {
                     var fparts = file.Item1.Split('?');
-                    var fname = fparts[0];
+                    fname = fparts[0];
 
                     if (fname == "") continue;
 
@@ -98,11 +99,13 @@ namespace CollectDependencies
                         try
                         {
                             // ReSharper disable once StringLiteralTypo
-                            if (fparts.Length > 1 && fparts[1] == "virt")
+                            if (fparts.Contains("virt"))
                             {
                                 var module = VirtualizedModule.Load(fname);
                                 module.Virtualize(fname);
                             }
+                            else if (fparts.Contains("native"))
+                                goto copy;
 
                             var resolver = new DefaultAssemblyResolver();
                             resolver.AddSearchDirectory(Path.GetDirectoryName(fname));
@@ -146,8 +149,12 @@ namespace CollectDependencies
                         }
                     }
 
+                    copy:
                     File.Copy(fname, outp);
-
+                }
+                catch (ArgumentException e)
+                {
+                    Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({file.Item2}): error: \"{file.Item1}\" {e}");
                 }
                 catch (Exception e)
                 {

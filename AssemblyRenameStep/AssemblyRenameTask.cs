@@ -2,6 +2,7 @@
 using Microsoft.Build.Utilities;
 using Mono.Cecil;
 using System;
+using System.Diagnostics;
 using System.IO;
 
 // ReSharper disable once CheckNamespace
@@ -39,7 +40,7 @@ namespace MSBuildTasks
                         {
                             ReadWrite = false,
                             InMemory = true,
-                            ReadingMode = ReadingMode.Immediate
+                            ReadingMode = ReadingMode.Deferred
                         });
                         var asmName = module.Assembly.Name;
                         var name = asmName.Name;
@@ -47,12 +48,22 @@ namespace MSBuildTasks
                         var newFile = $"{name}.{version}.dll";
                         var newFilePath = Path.Combine(Path.GetDirectoryName(assembly.ItemSpec) ?? throw new InvalidOperationException(), newFile);
 
+                        module.Dispose();
+
                         Log.LogMessage(MessageImportance.Normal, $"Old file: {assembly.ItemSpec}, new file: {newFilePath}");
 
                         if (File.Exists(newFilePath))
                             File.Delete(newFilePath);
 
                         File.Move(assembly.ItemSpec, newFilePath);
+
+                        string pdbFile;
+                        if (File.Exists(pdbFile = Path.ChangeExtension(assembly.ItemSpec, "pdb")))
+                        {
+                            Debug.Assert(pdbFile != null, nameof(pdbFile) + " != null");
+                            File.Move(pdbFile, Path.ChangeExtension(newFilePath, "pdb"));
+                        }
+
                     }
                     catch (Exception e)
                     {

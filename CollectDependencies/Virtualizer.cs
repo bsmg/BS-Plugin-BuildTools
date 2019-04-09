@@ -6,8 +6,8 @@ namespace CollectDependencies
 {
     class VirtualizedModule
     {
-        private readonly FileInfo _file;
-        private ModuleDefinition _module;
+        private readonly FileInfo file;
+        private ModuleDefinition module;
 
         public static VirtualizedModule Load(string engineFile)
         {
@@ -16,7 +16,7 @@ namespace CollectDependencies
 
         private VirtualizedModule(string assemblyFile)
         {
-            _file = new FileInfo(assemblyFile);
+            file = new FileInfo(assemblyFile);
 
             LoadModules();
         }
@@ -24,7 +24,7 @@ namespace CollectDependencies
         private void LoadModules()
         {
             var resolver = new DefaultAssemblyResolver();
-            resolver.AddSearchDirectory(_file.Directory?.FullName);
+            resolver.AddSearchDirectory(file.Directory?.FullName);
 
             var parameters = new ReaderParameters
             {
@@ -34,7 +34,7 @@ namespace CollectDependencies
                 InMemory = true
             };
 
-            _module = ModuleDefinition.ReadModule(_file.FullName, parameters);
+            module = ModuleDefinition.ReadModule(file.FullName, parameters);
         }
 
         /// <summary>
@@ -44,12 +44,12 @@ namespace CollectDependencies
         public void Virtualize(string targetFile)
         {
 
-            foreach (var type in _module.Types)
+            foreach (var type in module.Types)
             {
                 VirtualizeType(type);
             }
 
-            _module.Write(targetFile);
+            module.Write(targetFile);
         }
 
         private void VirtualizeType(TypeDefinition type)
@@ -103,7 +103,7 @@ namespace CollectDependencies
         {
             get
             {
-                var awakeMethods = _module.GetTypes().SelectMany(t => t.Methods.Where(m => m.Name == "Awake"));
+                var awakeMethods = module.GetTypes().SelectMany(t => t.Methods.Where(m => m.Name == "Awake"));
                 var methodDefinitions = awakeMethods as MethodDefinition[] ?? awakeMethods.ToArray();
                 if (!methodDefinitions.Any()) return false;
 
