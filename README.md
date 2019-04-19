@@ -65,5 +65,5 @@ In this example, `bsinstalldir.txt` must contain the full path to the root insta
 
 ### `AssemblyRenameStep`
 
-This defines an MSBuild target to automatically rename assemblies based on their version, according to [BSIPA's `Libs/` requirements](https://github.com/nike4613/BeatSaber-IPA-Reloaded/wiki/Developing#additional-libraries).
-Usage can be seen in BSIPA's [`IPA.Injector/PostBuild.msbuild`](https://github.com/nike4613/BeatSaber-IPA-Reloaded/blob/master/IPA.Injector/PostBuild.msbuild).
+This defines an MSBuild target to automatically rename assemblies based on their version, according to [BSIPA's `Libs/` requirements](https://github.com/beat-saber-modding-group/BeatSaber-IPA-Reloaded/wiki/Developing#additional-libraries).
+Usage can be seen in BSIPA's [`IPA.Injector/PostBuild.msbuild`](https://github.com/beat-saber-modding-group/BeatSaber-IPA-Reloaded/blob/master/IPA.Injector/PostBuild.msbuild).
