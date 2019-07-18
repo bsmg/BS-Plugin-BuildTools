@@ -114,7 +114,7 @@ namespace CollectDependencies
                     var outp = Path.Combine(directoryName ?? throw new InvalidOperationException(),
                         Path.GetFileName(fname) ?? throw new InvalidOperationException());
 
-                    var aliasp = fparts.FirstOrDefault(s => s.StartsWith("alias=")).Substring("alias=".Length);
+                    var aliasp = fparts.FirstOrDefault(s => s.StartsWith("alias="))?.Substring("alias=".Length);
                     if (aliasp != null)
                         outp = Path.Combine(directoryName, aliasp);
 
