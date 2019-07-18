@@ -13,7 +13,7 @@ namespace CollectDependencies
             var depsFile = File.ReadAllText(args[0]);
             var directoryName = Path.GetDirectoryName(args[0]);
 
-            var files = new List<Tuple<string, int>>();
+            var files = new List<(string file, int line, bool optional)>();
             { // Create files from stuff in depsfile
                 var stack = new Stack<string>();
 
@@ -32,6 +32,7 @@ namespace CollectDependencies
                     return v2;
                 }
 
+                var optBlock = false;
                 var lineNo = 0;
                 foreach (var line in depsFile.Split(new[] { Environment.NewLine, "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries))
                 {
@@ -47,50 +48,76 @@ namespace CollectDependencies
                         var arglist = string.Join(" ", parts);
                         if (command == "from")
                         { // an "import" type command
-                            path = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), arglist));
+                            try
+                            {
+                                path = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), arglist));
+                            }
+                            catch (Exception e)
+                            {
+                                var errorStrength = optBlock ? "warning" : "error";
+                                Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({lineNo}): {errorStrength}: Error resolving import {path}: {e}");
+                                path = "$\"Invalid Path";
+                            }
                         }
                         else if (command == "prompt")
                         {
                             Console.Write(arglist);
                             path = Console.ReadLine();
                         }
+                        else if (command == "startopt")
+                        {
+                            optBlock = true;
+                            goto continueTarget;
+                        }
+                        else if (command == "endopt")
+                        {
+                            optBlock = false;
+                            goto continueTarget;
+                        }
                         else
                         {
                             path = "";
-                            Console.Error.WriteLine($"Invalid command {command}");
+                            Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({lineNo}): error: Invalid command {command}");
                         }
                     }
 
                     if (level > stack.Count - 1)
                         Push(path);
                     else if (level == stack.Count - 1)
-                        files.Add(new Tuple<string, int>(Replace(path), lineNo));
+                        files.Add((Replace(path), lineNo, optBlock));
                     else if (level < stack.Count - 1)
                     {
-                        files.Add(new Tuple<string, int>(Pop(), lineNo));
+                        files.Add((Pop(), lineNo, optBlock));
                         while (level < stack.Count)
                             Pop();
                         Push(path);
                     }
 
+                    continueTarget:
                     lineNo++;
                 }
 
-                files.Add(new Tuple<string, int>(Pop(), lineNo));
+                files.Add((Pop(), lineNo, optBlock));
             }
 
             foreach (var file in files)
             {
+                var errorStrength = file.optional ? "warning" : "error";
                 string fname = null;
                 try
                 {
-                    var fparts = file.Item1.Split('?');
+                    var fparts = file.file.Split('?');
                     fname = fparts[0];
 
                     if (fname == "") continue;
 
                     var outp = Path.Combine(directoryName ?? throw new InvalidOperationException(),
                         Path.GetFileName(fname) ?? throw new InvalidOperationException());
+
+                    var aliasp = fparts.FirstOrDefault(s => s.StartsWith("alias=")).Substring("alias=".Length);
+                    if (aliasp != null)
+                        outp = Path.Combine(directoryName, aliasp);
+
                     Console.WriteLine($"Copying \"{fname}\" to \"{outp}\"");
                     if (File.Exists(outp)) File.Delete(outp);
 
@@ -145,7 +172,7 @@ namespace CollectDependencies
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({file.Item2}): warning: {e}");
+                            Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({file.line}): warning: {e}");
                         }
                     }
 
@@ -154,11 +181,11 @@ namespace CollectDependencies
                 }
                 catch (ArgumentException e)
                 {
-                    Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({file.Item2}): error: \"{file.Item1}\" {e}");
+                    Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({file.line}): {errorStrength}: \"{file.file}\" {e}");
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({file.Item2}): error: {e}");
+                    Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({file.line}): {errorStrength}: {e}");
                 }
             }
 
