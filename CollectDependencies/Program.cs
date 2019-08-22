@@ -118,6 +118,9 @@ namespace CollectDependencies
                     if (aliasp != null)
                         outp = Path.Combine(directoryName, aliasp);
 
+                    if (fparts.Contains("optional"))
+                        errorStrength = "warning";
+
                     Console.WriteLine($"Copying \"{fname}\" to \"{outp}\"");
                     if (File.Exists(outp)) File.Delete(outp);
 
