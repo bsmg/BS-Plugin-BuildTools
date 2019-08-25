@@ -121,6 +121,8 @@ namespace CollectDependencies
                     if (fparts.Contains("optional"))
                         errorStrength = "warning";
 
+                    bool emptyDll = !fparts.Contains("noempty");
+
                     Console.WriteLine($"Copying \"{fname}\" to \"{outp}\"");
                     if (File.Exists(outp)) File.Delete(outp);
 
@@ -137,39 +139,42 @@ namespace CollectDependencies
                             else if (fparts.Contains("native"))
                                 goto copy;
 
-                            var resolver = new DefaultAssemblyResolver();
-                            resolver.AddSearchDirectory(Path.GetDirectoryName(fname));
-                            var parameters = new ReaderParameters
+                            if (emptyDll)
                             {
-                                AssemblyResolver = resolver,
-                                ReadWrite = false,
-                                ReadingMode = ReadingMode.Immediate,
-                                InMemory = true
-                            };
-
-                            var modl = ModuleDefinition.ReadModule(fparts[0], parameters);
-                            foreach (var t in modl.Types)
-                            {
-                                void Clear(TypeDefinition type)
+                                var resolver = new DefaultAssemblyResolver();
+                                resolver.AddSearchDirectory(Path.GetDirectoryName(fname));
+                                var parameters = new ReaderParameters
                                 {
-                                    foreach (var m in type.Methods)
+                                    AssemblyResolver = resolver,
+                                    ReadWrite = false,
+                                    ReadingMode = ReadingMode.Immediate,
+                                    InMemory = true
+                                };
+
+                                var modl = ModuleDefinition.ReadModule(fparts[0], parameters);
+                                foreach (var t in modl.Types)
+                                {
+                                    void Clear(TypeDefinition type)
                                     {
-                                        if (m.Body != null)
+                                        foreach (var m in type.Methods)
                                         {
-                                            m.Body.Instructions.Clear();
-                                            m.Body.InitLocals = false;
-                                            m.Body.Variables.Clear();
+                                            if (m.Body != null)
+                                            {
+                                                m.Body.Instructions.Clear();
+                                                m.Body.InitLocals = false;
+                                                m.Body.Variables.Clear();
+                                            }
+                                        }
+                                        foreach (var ty in type.NestedTypes)
+                                        {
+                                            Clear(ty);
                                         }
                                     }
-                                    foreach (var ty in type.NestedTypes)
-                                    {
-                                        Clear(ty);
-                                    }
+                                    Clear(t);
                                 }
-                                Clear(t);
-                            }
 
-                            modl.Write(outp);
+                                modl.Write(outp);
+                            }
 
                             continue;
                         }
