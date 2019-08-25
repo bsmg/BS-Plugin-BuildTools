@@ -174,9 +174,9 @@ namespace CollectDependencies
                                 }
 
                                 modl.Write(outp);
-                            }
 
-                            continue;
+                                continue;
+                            }
                         }
                         catch (Exception e)
                         {
