@@ -1,10 +1,11 @@
 ﻿using Mono.Cecil;
+using System;
 using System.IO;
 using System.Linq;
 
 namespace CollectDependencies
 {
-    class VirtualizedModule
+    class VirtualizedModule : IDisposable
     {
         private readonly FileInfo file;
         private ModuleDefinition module;
@@ -52,7 +53,7 @@ namespace CollectDependencies
             module.Write(targetFile);
         }
 
-        private void VirtualizeType(TypeDefinition type)
+        internal static void VirtualizeType(TypeDefinition type)
         {
             if(type.IsSealed)
             {
@@ -99,16 +100,6 @@ namespace CollectDependencies
             }
         }
 
-        public bool IsVirtualized
-        {
-            get
-            {
-                var awakeMethods = module.GetTypes().SelectMany(t => t.Methods.Where(m => m.Name == "Awake"));
-                var methodDefinitions = awakeMethods as MethodDefinition[] ?? awakeMethods.ToArray();
-                if (!methodDefinitions.Any()) return false;
-
-                return ((float)methodDefinitions.Count(m => m.IsVirtual) / methodDefinitions.Count()) > 0.5f;
-            }
-        }
+        public void Dispose() => module?.Dispose();
     }
 }

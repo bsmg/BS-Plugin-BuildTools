@@ -130,52 +130,57 @@ namespace CollectDependencies
                     {
                         try
                         {
-                            // ReSharper disable once StringLiteralTypo
-                            if (fparts.Contains("virt"))
-                            {
-                                var module = VirtualizedModule.Load(fname);
-                                module.Virtualize(fname);
-                            }
-                            else if (fparts.Contains("native"))
+                            if (fparts.Contains("native"))
                                 goto copy;
-
-                            if (emptyDll)
+                            else
                             {
-                                var resolver = new DefaultAssemblyResolver();
-                                resolver.AddSearchDirectory(Path.GetDirectoryName(fname));
-                                var parameters = new ReaderParameters
+                                if (emptyDll)
                                 {
-                                    AssemblyResolver = resolver,
-                                    ReadWrite = false,
-                                    ReadingMode = ReadingMode.Immediate,
-                                    InMemory = true
-                                };
-
-                                var modl = ModuleDefinition.ReadModule(fparts[0], parameters);
-                                foreach (var t in modl.Types)
-                                {
-                                    void Clear(TypeDefinition type)
+                                    var resolver = new DefaultAssemblyResolver();
+                                    resolver.AddSearchDirectory(Path.GetDirectoryName(fname));
+                                    var parameters = new ReaderParameters
                                     {
-                                        foreach (var m in type.Methods)
+                                        AssemblyResolver = resolver,
+                                        ReadWrite = false,
+                                        ReadingMode = ReadingMode.Immediate,
+                                        InMemory = true
+                                    };
+
+                                    using var modl = ModuleDefinition.ReadModule(fparts[0], parameters);
+                                    var virtualize = fparts.Contains("virt");
+                                    
+                                    foreach (var t in modl.Types)
+                                    {
+                                        static void Clear(TypeDefinition type)
                                         {
-                                            if (m.Body != null)
+                                            foreach (var m in type.Methods)
                                             {
-                                                m.Body.Instructions.Clear();
-                                                m.Body.InitLocals = false;
-                                                m.Body.Variables.Clear();
+                                                if (m.Body != null)
+                                                {
+                                                    m.Body.Instructions.Clear();
+                                                    m.Body.InitLocals = false;
+                                                    m.Body.Variables.Clear();
+                                                }
+                                            }
+                                            foreach (var ty in type.NestedTypes)
+                                            {
+                                                Clear(ty);
                                             }
                                         }
-                                        foreach (var ty in type.NestedTypes)
-                                        {
-                                            Clear(ty);
-                                        }
+                                        if (virtualize)
+                                            VirtualizedModule.VirtualizeType(t);
+                                        Clear(t);
                                     }
-                                    Clear(t);
+
+                                    modl.Write(outp);
+
+                                    continue;
                                 }
-
-                                modl.Write(outp);
-
-                                continue;
+                                else if (fparts.Contains("virt"))
+                                {
+                                    using var module = VirtualizedModule.Load(fname);
+                                    module.Virtualize(outp);
+                                }
                             }
                         }
                         catch (Exception e)
