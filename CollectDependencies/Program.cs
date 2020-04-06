@@ -13,6 +13,7 @@ namespace CollectDependencies
             var depsFile = File.ReadAllText(args[0]);
             var directoryName = Path.GetDirectoryName(args[0]);
 
+            var resolveIn = new List<string>();
             var files = new List<(string file, int line, bool optional)>();
             { // Create files from stuff in depsfile
                 var stack = new Stack<string>();
@@ -21,7 +22,7 @@ namespace CollectDependencies
                 {
                     string pre = "";
                     if (stack.Count > 0)
-                        pre = stack.First();
+                        pre = stack.Peek();
                     stack.Push(pre + val);
                 }
                 string Pop() => stack.Pop();
@@ -31,6 +32,7 @@ namespace CollectDependencies
                     Push(val);
                     return v2;
                 }
+                string Peek() => stack.Peek();
 
                 var optBlock = false;
                 var lineNo = 0;
@@ -39,6 +41,7 @@ namespace CollectDependencies
                     var parts = line.Split('"');
                     var path = parts.Last();
                     var level = parts.Length - 1;
+                    var addPathToResolve = false;
 
                     if (path.StartsWith("::"))
                     { // pseudo-command
@@ -56,7 +59,7 @@ namespace CollectDependencies
                             {
                                 var errorStrength = optBlock ? "warning" : "error";
                                 Console.WriteLine($"{Path.Combine(Environment.CurrentDirectory, args[0])}({lineNo}): {errorStrength}: Error resolving import {path}: {e}");
-                                path = "$\"Invalid Path";
+                                path = "\" Invalid Path: ";
                             }
                         }
                         else if (command == "prompt")
@@ -73,6 +76,11 @@ namespace CollectDependencies
                         {
                             optBlock = false;
                             goto continueTarget;
+                        }
+                        else if (command == "resolveInHere")
+                        {
+                            path = arglist;
+                            addPathToResolve = true;
                         }
                         else
                         {
@@ -92,6 +100,8 @@ namespace CollectDependencies
                             Pop();
                         Push(path);
                     }
+                    if (addPathToResolve)
+                        resolveIn.Add(Peek());
 
                     continueTarget:
                     lineNo++;
@@ -106,6 +116,8 @@ namespace CollectDependencies
                 string fname = null;
                 try
                 {
+                    if (file.file[0] == '"') continue;
+
                     var fparts = file.file.Split('?');
                     fname = fparts[0];
 
@@ -138,6 +150,8 @@ namespace CollectDependencies
                                 {
                                     var resolver = new DefaultAssemblyResolver();
                                     resolver.AddSearchDirectory(Path.GetDirectoryName(fname));
+                                    foreach (var path in resolveIn)
+                                        resolver.AddSearchDirectory(path);
                                     var parameters = new ReaderParameters
                                     {
                                         AssemblyResolver = resolver,
