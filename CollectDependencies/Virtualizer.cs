@@ -1,4 +1,6 @@
-﻿using Mono.Cecil;
+﻿#nullable enable
+
+using Mono.Cecil;
 using System;
 using System.IO;
 using System.Linq;
@@ -19,10 +21,10 @@ namespace CollectDependencies
         {
             file = new FileInfo(assemblyFile);
 
-            LoadModules();
+            module = LoadModules();
         }
 
-        private void LoadModules()
+        private ModuleDefinition LoadModules()
         {
             var resolver = new DefaultAssemblyResolver();
             resolver.AddSearchDirectory(file.Directory?.FullName);
@@ -35,7 +37,7 @@ namespace CollectDependencies
                 InMemory = true
             };
 
-            module = ModuleDefinition.ReadModule(file.FullName, parameters);
+            return ModuleDefinition.ReadModule(file.FullName, parameters);
         }
 
         /// <summary>

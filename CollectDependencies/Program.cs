@@ -1,4 +1,5 @@
-﻿using Mono.Cecil;
+﻿#nullable enable
+using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -113,7 +114,7 @@ namespace CollectDependencies
             foreach (var file in files)
             {
                 var errorStrength = file.optional ? "warning" : "error";
-                string fname = null;
+                string? fname = null;
                 try
                 {
                     if (file.file[0] == '"') continue;
